@@ -123,6 +123,7 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.StringVarP(flagSet, &ci.StatsOneLineDateFormat, "stats-one-line-date-format", "", ci.StatsOneLineDateFormat, "Enable --stats-one-line-date and use custom formatted date: Enclose date string in double quotes (\"), see https://golang.org/pkg/time/#Time.Format", "Logging")
 	flags.BoolVarP(flagSet, &ci.ErrorOnNoTransfer, "error-on-no-transfer", "", ci.ErrorOnNoTransfer, "Sets exit code 9 if no files are transferred, useful in scripts", "Config")
 	flags.BoolVarP(flagSet, &ci.Progress, "progress", "P", ci.Progress, "Show progress during transfer", "Logging")
+	flags.BoolVarP(flagSet, &ci.ProgressJSONOutput, "progress-json-output", "", ci.ProgressJSONOutput, "Show progress during transfer via json", "Logging")
 	flags.BoolVarP(flagSet, &ci.ProgressTerminalTitle, "progress-terminal-title", "", ci.ProgressTerminalTitle, "Show progress on the terminal title (requires -P/--progress)", "Logging")
 	flags.BoolVarP(flagSet, &ci.Cookie, "use-cookies", "", ci.Cookie, "Enable session cookiejar", "Networking")
 	flags.BoolVarP(flagSet, &ci.UseMmap, "use-mmap", "", ci.UseMmap, "Use mmap allocator (see docs)", "Config")

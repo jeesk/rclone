@@ -4,6 +4,7 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -26,7 +27,7 @@ const (
 // startProgress starts the progress bar printing
 //
 // It returns a func which should be called to stop the stats.
-func startProgress() func() {
+func startProgress(progressJSONOutput bool) func() {
 	stopStats := make(chan struct{})
 	oldLogPrint := fs.LogPrint
 	oldSyncPrint := operations.SyncPrintf
@@ -34,14 +35,14 @@ func startProgress() func() {
 	if !log.Redirected() {
 		// Intercept the log calls if not logging to file or syslog
 		fs.LogPrint = func(level fs.LogLevel, text string) {
-			printProgress(fmt.Sprintf("%s %-6s: %s", time.Now().Format(logTimeFormat), level, text))
+			printProgress(fmt.Sprintf("%s %-6s: %s", time.Now().Format(logTimeFormat), level, text), progressJSONOutput)
 
 		}
 	}
 
 	// Intercept output from functions such as HashLister to stdout
 	operations.SyncPrintf = func(format string, a ...interface{}) {
-		printProgress(fmt.Sprintf(format, a...))
+		printProgress(fmt.Sprintf(format, a...), progressJSONOutput)
 	}
 
 	var wg sync.WaitGroup
@@ -56,10 +57,10 @@ func startProgress() func() {
 		for {
 			select {
 			case <-ticker.C:
-				printProgress("")
+				printProgress("", progressJSONOutput)
 			case <-stopStats:
 				ticker.Stop()
-				printProgress("")
+				printProgress("", progressJSONOutput)
 				fs.LogPrint = oldLogPrint
 				operations.SyncPrintf = oldSyncPrint
 				fmt.Println("")
@@ -79,14 +80,31 @@ var (
 )
 
 // printProgress prints the progress with an optional log
-func printProgress(logMessage string) {
+func printProgress(logMessage string, progressJSONOutput bool) {
 	operations.StdoutMutex.Lock()
 	defer operations.StdoutMutex.Unlock()
-
 	var buf bytes.Buffer
 	w, _ := terminal.GetSize()
-	stats := strings.TrimSpace(accounting.GlobalStats().String())
 	logMessage = strings.TrimSpace(logMessage)
+	if progressJSONOutput {
+		out, err := accounting.GlobalStats().RemoteStats()
+		data := map[string]interface{}{}
+		if err != nil {
+			data["msg"] = err.Error()
+		} else {
+			data["data"] = out
+		}
+		jsonData, err := json.Marshal(data)
+		if err != nil {
+			// 处理错误
+			return
+		}
+		terminal.Write(jsonData)
+		terminal.Write([]byte{'\n'})
+		return
+	}
+
+	stats := strings.TrimSpace(accounting.GlobalStats().String())
 
 	out := func(s string) {
 		buf.WriteString(s)

@@ -123,6 +123,7 @@ type ConfigInfo struct {
 	ErrorOnNoTransfer          bool   // Set appropriate exit code if no files transferred
 	Progress                   bool
 	ProgressTerminalTitle      bool
+	ProgressJSONOutput         bool
 	Cookie                     bool
 	UseMmap                    bool
 	CaCert                     []string // Client Side CA
